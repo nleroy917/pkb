@@ -5,8 +5,27 @@ description = "Testing two different systems for searching a local database of r
 readme = "README.md"
 requires-python = ">=3.11.4"
 dependencies = [
+    "click>=8.1.0",
     "elasticsearch>=9.2.0",
     "polars>=1.35.1",
     "pymupdf>=1.26.6",
+    "pyyaml>=6.0",
+    "rich>=13.0.0",
     "sentence-transformers>=5.1.2",
+]
+
+[project.scripts]
+pkb = "pkb.cli:cli"
+
+[tool.setuptools]
+packages = ["pkb"]
+
+[tool.uv]
+package = true
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
+    "ruff>=0.14.4",
+    "ty>=0.0.1a25",
 ]
