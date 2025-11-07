@@ -221,3 +221,6 @@ pdfs
 datasets
 elastic-start-local
 library.csv
+
+# jetbrains
+.idea/
