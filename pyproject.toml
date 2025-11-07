@@ -1,0 +1,12 @@
+[project]
+name = "ref-database-search"
+version = "0.1.0"
+description = "Testing two different systems for searching a local database of reference documents: Elasticsearch vs. Qdrant"
+readme = "README.md"
+requires-python = ">=3.11.4"
+dependencies = [
+    "elasticsearch>=9.2.0",
+    "polars>=1.35.1",
+    "pymupdf>=1.26.6",
+    "sentence-transformers>=5.1.2",
+]
