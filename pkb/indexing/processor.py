@@ -1,5 +1,6 @@
 from pkb.core.models import Document
 
+
 class DocumentProcessor:
     """
     Processes documents for indexing by:
@@ -89,7 +90,7 @@ class DocumentProcessor:
         """
         Find the last sentence boundary in the given range.
         """
-        search_text = text[max(0, start):end]
+        search_text = text[max(0, start) : end]
 
         for delimiter in [". ", "! ", "? ", ".\n", "!\n", "?\n"]:
             pos = search_text.rfind(delimiter)
@@ -102,7 +103,7 @@ class DocumentProcessor:
         """
         Find the last word boundary in the given range.
         """
-        search_text = text[max(0, start):end]
+        search_text = text[max(0, start) : end]
 
         for delimiter in [" ", "\n", "\t"]:
             pos = search_text.rfind(delimiter)

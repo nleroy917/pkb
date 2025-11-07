@@ -58,20 +58,23 @@ class StateStore:
         """
         try:
             with sqlite3.connect(self.db_path) as conn:
-                conn.execute("""
+                conn.execute(
+                    """
                     INSERT OR REPLACE INTO file_state
                     (id, source, file_path, content_hash, mtime, size, metadata, last_indexed)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    state.id,
-                    state.source,
-                    state.file_path,
-                    state.content_hash,
-                    state.mtime,
-                    state.size,
-                    json.dumps(state.metadata),
-                    state.last_indexed.isoformat(),
-                ))
+                """,
+                    (
+                        state.id,
+                        state.source,
+                        state.file_path,
+                        state.content_hash,
+                        state.mtime,
+                        state.size,
+                        json.dumps(state.metadata),
+                        state.last_indexed.isoformat(),
+                    ),
+                )
                 conn.commit()
         except sqlite3.Error as e:
             raise StateStoreException(f"Failed to save state: {e}")
@@ -89,10 +92,7 @@ class StateStore:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 conn.row_factory = sqlite3.Row
-                cursor = conn.execute(
-                    "SELECT * FROM file_state WHERE id = ?",
-                    (id,)
-                )
+                cursor = conn.execute("SELECT * FROM file_state WHERE id = ?", (id,))
                 row = cursor.fetchone()
 
                 if row is None:
@@ -116,8 +116,7 @@ class StateStore:
             with sqlite3.connect(self.db_path) as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.execute(
-                    "SELECT * FROM file_state WHERE source = ?",
-                    (source,)
+                    "SELECT * FROM file_state WHERE source = ?", (source,)
                 )
                 rows = cursor.fetchall()
 
@@ -154,10 +153,7 @@ class StateStore:
         """
         try:
             with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.execute(
-                    "DELETE FROM file_state WHERE id = ?",
-                    (id,)
-                )
+                cursor = conn.execute("DELETE FROM file_state WHERE id = ?", (id,))
                 conn.commit()
                 return cursor.rowcount > 0
         except sqlite3.Error as e:
@@ -176,8 +172,7 @@ class StateStore:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.execute(
-                    "DELETE FROM file_state WHERE source = ?",
-                    (source,)
+                    "DELETE FROM file_state WHERE source = ?", (source,)
                 )
                 conn.commit()
                 return cursor.rowcount
@@ -209,8 +204,7 @@ class StateStore:
             with sqlite3.connect(self.db_path) as conn:
                 if source:
                     cursor = conn.execute(
-                        "SELECT COUNT(*) FROM file_state WHERE source = ?",
-                        (source,)
+                        "SELECT COUNT(*) FROM file_state WHERE source = ?", (source,)
                     )
                 else:
                     cursor = conn.execute("SELECT COUNT(*) FROM file_state")

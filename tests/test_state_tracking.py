@@ -109,10 +109,18 @@ def test_changes_summary():
 
         # Create mock changes
         changes = [
-            Change(ChangeType.ADDED, FileState("1", "test", "/path/1", "hash1", 0.0, 0)),
-            Change(ChangeType.ADDED, FileState("2", "test", "/path/2", "hash2", 0.0, 0)),
-            Change(ChangeType.MODIFIED, FileState("3", "test", "/path/3", "hash3", 0.0, 0)),
-            Change(ChangeType.DELETED, FileState("4", "test", "/path/4", "hash4", 0.0, 0)),
+            Change(
+                ChangeType.ADDED, FileState("1", "test", "/path/1", "hash1", 0.0, 0)
+            ),
+            Change(
+                ChangeType.ADDED, FileState("2", "test", "/path/2", "hash2", 0.0, 0)
+            ),
+            Change(
+                ChangeType.MODIFIED, FileState("3", "test", "/path/3", "hash3", 0.0, 0)
+            ),
+            Change(
+                ChangeType.DELETED, FileState("4", "test", "/path/4", "hash4", 0.0, 0)
+            ),
         ]
 
         summary = detector.get_changes_summary(changes)
@@ -120,5 +128,3 @@ def test_changes_summary():
         assert summary["added"] == 2
         assert summary["modified"] == 1
         assert summary["deleted"] == 1
-
-

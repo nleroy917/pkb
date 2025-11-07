@@ -21,9 +21,7 @@ class ChangeDetector:
         self.state_store = state_store
 
     def detect_changes(
-        self,
-        current_states: dict[str, FileState],
-        source: Optional[str] = None
+        self, current_states: dict[str, FileState], source: Optional[str] = None
     ) -> list[Change]:
         """
         Detect changes by comparing current states with stored states.
@@ -38,36 +36,44 @@ class ChangeDetector:
         changes = []
 
         if source:
-            stored_states = {s.id: s for s in self.state_store.get_states_by_source(source)}
+            stored_states = {
+                s.id: s for s in self.state_store.get_states_by_source(source)
+            }
         else:
             stored_states = {s.id: s for s in self.state_store.get_all_states()}
 
         for file_id, current_state in current_states.items():
             if file_id not in stored_states:
                 # new file!
-                changes.append(Change(
-                    change_type=ChangeType.ADDED,
-                    file_state=current_state,
-                ))
+                changes.append(
+                    Change(
+                        change_type=ChangeType.ADDED,
+                        file_state=current_state,
+                    )
+                )
             else:
                 stored_state = stored_states[file_id]
                 if current_state.has_changed(stored_state):
                     # modified file!
-                    changes.append(Change(
-                        change_type=ChangeType.MODIFIED,
-                        file_state=current_state,
-                        previous_state=stored_state,
-                    ))
+                    changes.append(
+                        Change(
+                            change_type=ChangeType.MODIFIED,
+                            file_state=current_state,
+                            previous_state=stored_state,
+                        )
+                    )
 
         # finally, check for deleted files
         for file_id, stored_state in stored_states.items():
             if file_id not in current_states:
                 # deleted file
-                changes.append(Change(
-                    change_type=ChangeType.DELETED,
-                    file_state=stored_state,
-                    previous_state=stored_state,
-                ))
+                changes.append(
+                    Change(
+                        change_type=ChangeType.DELETED,
+                        file_state=stored_state,
+                        previous_state=stored_state,
+                    )
+                )
 
         return changes
 
@@ -100,6 +106,7 @@ class ChangeDetector:
         # generate file ID if not provided
         if file_id is None:
             from pkb.state.utils import compute_content_hash
+
             file_id = compute_content_hash(f"{source}:{file_path}", algorithm="sha256")
 
         # compute file hash and metadata

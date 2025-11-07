@@ -52,9 +52,7 @@ def example_obsidian_usage():
 
             # Create document for indexing
             doc = obsidian.create_document(
-                change.file_state.id,
-                change.file_state.file_path,
-                content=content
+                change.file_state.id, change.file_state.file_path, content=content
             )
             print(f"  Metadata: {doc.metadata.keys()}")
 
@@ -95,7 +93,9 @@ def example_zotero_usage():
 
     # Process changes
     for change in changes:
-        print(f"\n{change.change_type.value.upper()}: {change.file_state.metadata.get('title', 'Unknown')}")
+        print(
+            f"\n{change.change_type.value.upper()}: {change.file_state.metadata.get('title', 'Unknown')}"
+        )
 
         if change.change_type.name in ["ADDED", "MODIFIED"]:
             # Extract PDF content (can be slow for large PDFs)
@@ -103,8 +103,7 @@ def example_zotero_usage():
 
             # Get metadata without extracting full content
             metadata = zotero.extract_metadata(
-                change.file_state.id,
-                change.file_state.file_path
+                change.file_state.id, change.file_state.file_path
             )
             print(f"  Author: {metadata.get('author', 'N/A')}")
             print(f"  Year: {metadata.get('publication_year', 'N/A')}")

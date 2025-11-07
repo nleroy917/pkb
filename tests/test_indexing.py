@@ -38,7 +38,9 @@ def test_document_processor_basic():
 
     processed = processor.process_document(doc)
     assert len(processed.chunks) > 1
-    assert all(len(chunk) <= 120 for chunk in processed.chunks)  # chunk_size + some tolerance
+    assert all(
+        len(chunk) <= 120 for chunk in processed.chunks
+    )  # chunk_size + some tolerance
 
 
 def test_document_processor_sentence_boundaries():
@@ -48,9 +50,13 @@ def test_document_processor_sentence_boundaries():
     processor = DocumentProcessor(chunk_size=80, chunk_overlap=10, min_chunk_size=30)
 
     # Create text long enough to need chunking
-    sentences = ["This is sentence number one. ", "This is sentence number two. ",
-                 "This is sentence number three. ", "This is sentence number four. ",
-                 "This is sentence number five. "]
+    sentences = [
+        "This is sentence number one. ",
+        "This is sentence number two. ",
+        "This is sentence number three. ",
+        "This is sentence number four. ",
+        "This is sentence number five. ",
+    ]
     text = "".join(sentences * 3)  # Repeat to make it long enough
 
     chunks = processor.chunk_text(text)
@@ -58,8 +64,12 @@ def test_document_processor_sentence_boundaries():
     # should create multiple chunks
     assert len(chunks) > 1
     # Most chunks should end at sentence boundaries (with period)
-    chunks_ending_with_period = sum(1 for chunk in chunks if chunk.rstrip().endswith("."))
-    assert chunks_ending_with_period >= len(chunks) // 2  # At least half should end with period
+    chunks_ending_with_period = sum(
+        1 for chunk in chunks if chunk.rstrip().endswith(".")
+    )
+    assert (
+        chunks_ending_with_period >= len(chunks) // 2
+    )  # At least half should end with period
 
 
 def test_document_processor_empty_text():

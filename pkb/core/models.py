@@ -6,6 +6,7 @@ from typing import Any, Optional
 
 class ChangeType(Enum):
     """Type of change detected in a document."""
+
     ADDED = "added"
     MODIFIED = "modified"
     DELETED = "deleted"
@@ -17,6 +18,7 @@ class FileState:
     Represents the state of a file at a point in time.
     Used for change detection.
     """
+
     id: str  # unique identifier (e.g., hash of source + file_path)
     source: str  # data source name (e.g., 'zotero', 'obsidian')
     file_path: str  # absolute path to the file
@@ -46,6 +48,7 @@ class Document:
     """
     Represents a document to be indexed in search backends.
     """
+
     id: str  # unique document identifier
     source: str  # data source name
     file_path: str  # path to source file
@@ -76,6 +79,7 @@ class Change:
     """
     Represents a detected change in a document.
     """
+
     change_type: ChangeType
     file_state: FileState
     previous_state: Optional[FileState] = None

@@ -5,7 +5,9 @@ from pathlib import Path
 from typing import BinaryIO
 
 
-def compute_file_hash(file_path: str | Path, algorithm: str = "sha256", chunk_size: int = 8192) -> str:
+def compute_file_hash(
+    file_path: str | Path, algorithm: str = "sha256", chunk_size: int = 8192
+) -> str:
     """
     Compute hash of file content.
 

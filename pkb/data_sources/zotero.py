@@ -14,7 +14,12 @@ except ImportError:
 from pkb.core.exceptions import DataSourceException
 from pkb.core.models import FileState
 from pkb.data_sources.base import BaseDataSource
-from pkb.state.utils import compute_content_hash, compute_file_hash, get_file_mtime, get_file_size
+from pkb.state.utils import (
+    compute_content_hash,
+    compute_file_hash,
+    get_file_mtime,
+    get_file_size,
+)
 
 
 class ZoteroDataSource(BaseDataSource):
@@ -67,9 +72,7 @@ class ZoteroDataSource(BaseDataSource):
                 "Export your Zotero library with file attachments included."
             )
 
-        return df.filter(
-            pl.col("File Attachments").str.contains(".pdf")
-        ).with_columns(
+        return df.filter(pl.col("File Attachments").str.contains(".pdf")).with_columns(
             pl.col("File Attachments")
             .str.split(";")
             .list.eval(

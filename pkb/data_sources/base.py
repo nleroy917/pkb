@@ -75,7 +75,9 @@ class BaseDataSource(ABC):
         """
         raise NotImplementedError
 
-    def create_document(self, file_id: str, file_path: str, content: Optional[str] = None) -> Document:
+    def create_document(
+        self, file_id: str, file_path: str, content: Optional[str] = None
+    ) -> Document:
         """
         Create a Document object from a file.
 

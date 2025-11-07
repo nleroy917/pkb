@@ -4,7 +4,12 @@ from typing import Iterator, Optional
 from pkb.core.exceptions import DataSourceException
 from pkb.core.models import FileState
 from pkb.data_sources.base import BaseDataSource
-from pkb.state.utils import compute_content_hash, compute_file_hash, get_file_mtime, get_file_size
+from pkb.state.utils import (
+    compute_content_hash,
+    compute_file_hash,
+    get_file_mtime,
+    get_file_size,
+)
 
 
 class ObsidianDataSource(BaseDataSource):
@@ -18,7 +23,7 @@ class ObsidianDataSource(BaseDataSource):
         self,
         vault_path: str,
         include_patterns: Optional[list[str]] = None,
-        exclude_patterns: Optional[list[str]] = None
+        exclude_patterns: Optional[list[str]] = None,
     ):
         """
         Initialize Obsidian data source.
@@ -36,7 +41,9 @@ class ObsidianDataSource(BaseDataSource):
             raise DataSourceException(f"Obsidian vault not found: {vault_path}")
 
         if not self.vault_path.is_dir():
-            raise DataSourceException(f"Obsidian vault path is not a directory: {vault_path}")
+            raise DataSourceException(
+                f"Obsidian vault path is not a directory: {vault_path}"
+            )
 
         self.include_patterns = include_patterns or ["**/*.md", "**/*.markdown"]
 
@@ -112,7 +119,9 @@ class ObsidianDataSource(BaseDataSource):
             "file_id": file_id,
             "relative_path": str(relative_path),
             "filename": file_path.name,
-            "folder": str(relative_path.parent) if relative_path.parent != Path(".") else "",
+            "folder": str(relative_path.parent)
+            if relative_path.parent != Path(".")
+            else "",
         }
 
         return FileState(
@@ -166,7 +175,9 @@ class ObsidianDataSource(BaseDataSource):
             "file_id": file_id,
             "relative_path": str(relative_path),
             "filename": file_path.name,
-            "folder": str(relative_path.parent) if relative_path.parent != Path(".") else "",
+            "folder": str(relative_path.parent)
+            if relative_path.parent != Path(".")
+            else "",
         }
 
         try:
@@ -203,6 +214,7 @@ class ObsidianDataSource(BaseDataSource):
             # try to parse YAML (if pyyaml available)
             try:
                 import yaml
+
                 return yaml.safe_load(frontmatter_text)
             except ImportError:
                 # if yaml not available, do basic parsing
@@ -222,4 +234,6 @@ class ObsidianDataSource(BaseDataSource):
         return len(self._get_all_files())
 
     def __repr__(self) -> str:
-        return f"ObsidianDataSource(vault_path={self.vault_path}, num_files={len(self)})"
+        return (
+            f"ObsidianDataSource(vault_path={self.vault_path}, num_files={len(self)})"
+        )
