@@ -1,7 +1,10 @@
+from pathlib import Path
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from pkb.config import Config
@@ -145,18 +148,37 @@ class PKBServer:
     def _register_routes(self):
         """Register API routes."""
 
-        @self.app.get("/", tags=["General"])
-        async def root():
-            """Root endpoint with API information."""
-            return {
-                "name": "PKB Search API",
-                "version": "0.1.0",
-                "endpoints": {
-                    "search": "/search",
-                    "health": "/health",
-                    "docs": "/docs",
-                },
-            }
+        # Mount static files from frontend build (if exists)
+        frontend_build = Path(__file__).parent.parent / "frontend" / "build"
+        if frontend_build.exists():
+            self.app.mount("/assets", StaticFiles(directory=str(frontend_build / "assets")), name="assets")
+
+            @self.app.get("/", tags=["General"])
+            async def serve_frontend():
+                """Serve the frontend application."""
+                index_file = frontend_build / "index.html"
+                if index_file.exists():
+                    return FileResponse(str(index_file))
+                return {
+                    "name": "PKB Search API",
+                    "version": "0.1.0",
+                    "message": "Frontend not built. Run: cd frontend && bun run build",
+                }
+        else:
+            print("Warning: Frontend build directory not found. Serving API only.")
+            @self.app.get("/", tags=["General"])
+            async def root():
+                """Root endpoint with API information."""
+                return {
+                    "name": "PKB Search API",
+                    "version": "0.1.0",
+                    "endpoints": {
+                        "search": "/api/search",
+                        "health": "/api/health",
+                        "docs": "/docs",
+                    },
+                    "message": "Frontend not built. Run: cd frontend && bun run build",
+                }
 
         @self.app.get("/health", response_model=HealthResponse, tags=["General"])
         async def health():

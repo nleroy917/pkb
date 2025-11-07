@@ -71,15 +71,20 @@ pkb search "neural networks" --backend vector
 pkb search "transformers" -k 20 -v
 ```
 
-**Via REST API:**
+**Via Web UI:**
 
-Start the server:
+Build and start the web interface:
 
 ```bash
-pkb serve
+./build-frontend.sh  # Build the Svelte frontend
+pkb serve            # Start server with UI
 ```
 
-Then visit http://localhost:8000/docs to test the API interactively, or use it from your frontend:
+Then open http://localhost:8000 in your browser.
+
+**Via REST API:**
+
+The API is also available at http://localhost:8000/docs for interactive testing, or use it programmatically:
 
 ```javascript
 const response = await fetch('http://localhost:8000/search?query=machine+learning');
