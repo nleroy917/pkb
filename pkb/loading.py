@@ -64,7 +64,12 @@ class BackendLoader:
             console.print(f"    Processing {data_source.source_name}...")
 
             # scan and extract documents
+            scan_count = 0
             for file_id, file_path in data_source.scan():
+                scan_count += 1
+                if scan_count % 10 == 0:
+                    console.print(f"      Scanned {scan_count} files...", end="\r")
+
                 try:
                     # extract content
                     content = data_source.extract_content(file_path)
@@ -84,6 +89,9 @@ class BackendLoader:
                         f"      [yellow]Warning: Failed to process {file_path}: {e}[/yellow]"
                     )
                     continue
+
+            if scan_count > 0:
+                console.print(f"      Scanned {scan_count} files total")
 
         if not documents:
             console.print("  [yellow]No documents to load[/yellow]")

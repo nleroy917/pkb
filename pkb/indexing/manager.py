@@ -62,8 +62,13 @@ class IndexManager:
         # step 1: scan data source and create file states
         print("  Scanning files...")
         current_states = {}
+        scan_count = 0
 
         for file_id, file_path in data_source.scan():
+            scan_count += 1
+            if scan_count % 10 == 0:
+                print(f"    Scanned {scan_count} files...", end="\r")
+
             try:
                 state = data_source.create_file_state(file_id, file_path)
                 current_states[file_id] = state
@@ -71,6 +76,8 @@ class IndexManager:
                 print(f"  Warning: Failed to create state for {file_path}: {e}")
                 continue
 
+        if scan_count > 0:
+            print(f"    Scanned {scan_count} files total")
         print(f"  Found {len(current_states)} files")
 
         # step 2: detect changes
@@ -89,8 +96,13 @@ class IndexManager:
 
         if process_documents:
             print("  Processing documents...")
+            process_count = 0
 
             for change in changes:
+                process_count += 1
+                if process_count % 10 == 0:
+                    print(f"    Processed {process_count} documents...", end="\r")
+
                 if change.change_type in [ChangeType.ADDED, ChangeType.MODIFIED]:
                     try:
                         # extract content
@@ -218,7 +230,12 @@ class IndexManager:
         if force:
             # return all documents
             documents = []
+            scan_count = 0
             for file_id, file_path in data_source.scan():
+                scan_count += 1
+                if scan_count % 10 == 0:
+                    print(f"  Scanned {scan_count} files...", end="\r")
+
                 try:
                     doc = data_source.create_document(file_id, file_path)
                     doc = self.processor.process_document(doc)
@@ -226,6 +243,9 @@ class IndexManager:
                 except Exception as e:
                     print(f"Warning: Failed to create document for {file_path}: {e}")
                     continue
+
+            if scan_count > 0:
+                print(f"  Scanned {scan_count} files total")
 
             return documents
         else:

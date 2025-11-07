@@ -185,10 +185,15 @@ def load(ctx, backend, source):
     # determine which backends to load
     backends_to_load = []
 
+    # Get ES config
+    es_config = config.get("backends.elasticsearch", {})
+    es_api_key = es_config.get("api_key")
+    es_username = es_config.get("username")
+    es_password = es_config.get("password")
+
     if backend:
         # specific backend requested
         if backend == "keyword":
-            es_config = config.get("backends.elasticsearch", {})
             backends_to_load.append(
                 ElasticsearchKeywordBackend(
                     index_name=es_config.get("indexes", {}).get(
@@ -196,16 +201,21 @@ def load(ctx, backend, source):
                     ),
                     host=es_config.get("host", "localhost"),
                     port=es_config.get("port", 9200),
+                    api_key=es_api_key,
+                    username=es_username,
+                    password=es_password,
                 )
             )
         elif backend == "vector":
-            es_config = config.get("backends.elasticsearch", {})
             backends_to_load.append(
                 ElasticsearchVectorBackend(
                     index_name=es_config.get("indexes", {}).get("vector", "pkb_vector"),
                     host=es_config.get("host", "localhost"),
                     port=es_config.get("port", 9200),
                     embedding_dim=embedding_gen.get_embedding_dim(),
+                    api_key=es_api_key,
+                    username=es_username,
+                    password=es_password,
                 )
             )
         else:
@@ -214,7 +224,6 @@ def load(ctx, backend, source):
             sys.exit(1)
     else:
         # load all enabled backends
-        es_config = config.get("backends.elasticsearch", {})
         if es_config.get("enabled", False):
             backends_to_load.append(
                 ElasticsearchKeywordBackend(
@@ -223,6 +232,9 @@ def load(ctx, backend, source):
                     ),
                     host=es_config.get("host", "localhost"),
                     port=es_config.get("port", 9200),
+                    api_key=es_api_key,
+                    username=es_username,
+                    password=es_password,
                 )
             )
             backends_to_load.append(
@@ -231,6 +243,9 @@ def load(ctx, backend, source):
                     host=es_config.get("host", "localhost"),
                     port=es_config.get("port", 9200),
                     embedding_dim=embedding_gen.get_embedding_dim(),
+                    api_key=es_api_key,
+                    username=es_username,
+                    password=es_password,
                 )
             )
 
@@ -246,7 +261,7 @@ def load(ctx, backend, source):
     # load each backend
     for backend_instance in backends_to_load:
         try:
-            result = loader.load_backend(
+            loader.load_backend(
                 backend=backend_instance,
                 data_sources=data_sources,
                 source_filter=source,
@@ -262,23 +277,217 @@ def load(ctx, backend, source):
 
 
 @cli.command()
+@click.argument("query")
+@click.option(
+    "--backend",
+    "-b",
+    type=click.Choice(["keyword", "vector", "all"]),
+    default="all",
+    help="Backend type to use for search",
+)
+@click.option("--top-k", "-k", type=int, default=10, help="Number of results to return")
+@click.option("--verbose", "-v", is_flag=True, help="Show full content and metadata")
+@click.pass_context
+def search(ctx, query, backend, top_k, verbose):
+    """
+    Search across configured backends.
+
+    Searches indexed documents using the specified backend(s).
+    Results are ranked by relevance score.
+
+    Example:
+        pkb search "machine learning"
+        pkb search "neural networks" --backend vector -k 5
+    """
+    config = ctx.obj["config"]
+
+    # import here to avoid circular dependencies
+    from pkb.embeddings import EmbeddingGenerator
+    from pkb.search import SearchEngine
+    from pkb.search_backends.elastic.keyword import ElasticsearchKeywordBackend
+    from pkb.search_backends.elastic.vector import ElasticsearchVectorBackend
+
+    # get ES config
+    es_config = config.get("backends.elasticsearch", {})
+
+    if not es_config.get("enabled", False):
+        console.print(
+            "[yellow]Warning:[/yellow] Elasticsearch backend not enabled in config"
+        )
+        console.print("Enable it in your config or use --backend to specify backends")
+        sys.exit(0)
+
+    es_api_key = es_config.get("api_key")
+    es_username = es_config.get("username")
+    es_password = es_config.get("password")
+
+    # create backends based on selection
+    backends = []
+
+    if backend in ["keyword", "all"]:
+        backends.append(
+            ElasticsearchKeywordBackend(
+                index_name=es_config.get("indexes", {}).get("keyword", "pkb_keyword"),
+                host=es_config.get("host", "localhost"),
+                port=es_config.get("port", 9200),
+                api_key=es_api_key,
+                username=es_username,
+                password=es_password,
+            )
+        )
+
+    if backend in ["vector", "all"]:
+        # need embedding generator for vector search
+        embedding_model = config.get(
+            "embeddings.model", "sentence-transformers/all-MiniLM-L6-v2"
+        )
+        embedding_gen = EmbeddingGenerator(model_name=embedding_model)
+
+        backends.append(
+            ElasticsearchVectorBackend(
+                index_name=es_config.get("indexes", {}).get("vector", "pkb_vector"),
+                host=es_config.get("host", "localhost"),
+                port=es_config.get("port", 9200),
+                embedding_dim=embedding_gen.get_embedding_dim(),
+                api_key=es_api_key,
+                username=es_username,
+                password=es_password,
+            )
+        )
+
+    if not backends:
+        console.print("[red]No backends available[/red]")
+        sys.exit(1)
+
+    # create search engine
+    embedding_gen = None
+    if backend in ["vector", "all"]:
+        embedding_model = config.get(
+            "embeddings.model", "sentence-transformers/all-MiniLM-L6-v2"
+        )
+        embedding_gen = EmbeddingGenerator(model_name=embedding_model)
+
+    search_engine = SearchEngine(backends=backends, embedding_generator=embedding_gen)
+
+    console.print(f"\n[bold]Searching for:[/bold] {query}")
+    console.print(f"Backend: {backend}, Top-K: {top_k}\n")
+
+    try:
+        results = search_engine.search(query, top_k=top_k)
+
+        if not results:
+            console.print("[yellow]No results found[/yellow]")
+            return
+
+        console.print(f"[green]Found {len(results)} results[/green]\n")
+
+        # display results
+        for i, result in enumerate(results, 1):
+            console.print(f"[bold cyan]{i}. {result.file_path}[/bold cyan]")
+            console.print(f"   Score: [yellow]{result.score:.4f}[/yellow]")
+            console.print(f"   Source: {result.source}")
+            console.print(f"   Backend: {result.backend}")
+
+            if result.chunk_id is not None:
+                console.print(f"   Chunk: {result.chunk_id}")
+
+            # show content preview or full content
+            if verbose:
+                console.print(f"\n   Content:\n   {result.content}\n")
+                if result.metadata:
+                    console.print(f"   Metadata: {result.metadata}")
+            else:
+                # show first 200 chars
+                preview = (
+                    result.content[:200] + "..."
+                    if len(result.content) > 200
+                    else result.content
+                )
+                console.print(f"   {preview}")
+
+            console.print()
+
+    except Exception as e:
+        console.print(f"[red]Search failed:[/red] {e}")
+        import traceback
+
+        traceback.print_exc()
+        sys.exit(1)
+
+
+@cli.command()
 @click.option("--host", "-h", type=str, help="Server host")
 @click.option("--port", "-p", type=int, help="Server port")
+@click.option("--reload", is_flag=True, help="Enable auto-reload for development")
 @click.pass_context
-def serve(ctx, host, port):
+def serve(ctx, host, port, reload):
     """
     Start the REST API server.
 
     Starts a web server that provides a REST API for searching
-    across all configured backends.
+    across all configured backends. Includes automatic CORS support
+    for frontend applications.
+
+    Example:
+        pkb serve
+        pkb serve --host 0.0.0.0 --port 8080
+        pkb serve --reload  # Development mode with auto-reload
     """
     config = ctx.obj["config"]
 
     host = host or config.get("server.host", "0.0.0.0")
     port = port or config.get("server.port", 8000)
 
-    console.print("[yellow]Note:[/yellow] REST server not yet implemented")
-    console.print(f"Will serve on http://{host}:{port}")
+    # check if elasticsearch is enabled
+    es_config = config.get("backends.elasticsearch", {})
+    if not es_config.get("enabled", False):
+        console.print(
+            "[yellow]Warning:[/yellow] Elasticsearch backend not enabled in config"
+        )
+        console.print("The server will start but search will not work.")
+        console.print("Enable Elasticsearch in your config file.\n")
+
+    console.print("[bold]Starting PKB REST API Server[/bold]")
+    console.print(f"Host: {host}")
+    console.print(f"Port: {port}")
+    console.print(f"Config: {config.config_path}\n")
+
+    console.print("[green]Server will be available at:[/green]")
+    console.print(f"  API: http://{host}:{port}")
+    console.print(f"  Docs: http://{host}:{port}/docs")
+    console.print(f"  Health: http://{host}:{port}/health\n")
+
+    console.print("[cyan]Press Ctrl+C to stop the server[/cyan]\n")
+
+    try:
+        import uvicorn
+
+        from pkb.server import create_app
+
+        # create app with config
+        app = create_app(config=config)
+
+        # run server
+        uvicorn.run(
+            app,
+            host=host,
+            port=port,
+            reload=reload,
+            log_level="info",
+        )
+
+    except ImportError:
+        console.print(
+            "[red]Error:[/red] uvicorn and fastapi are required to run the server"
+        )
+        console.print("Install with: pip install fastapi uvicorn")
+        sys.exit(1)
+    except Exception as e:
+        console.print(f"[red]Server error:[/red] {e}")
+        import traceback
+
+        traceback.print_exc()
+        sys.exit(1)
 
 
 @cli.command()

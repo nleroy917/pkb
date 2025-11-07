@@ -18,6 +18,9 @@ class ElasticsearchVectorBackend(BaseSearchBackend):
         host: str = "localhost",
         port: int = 9200,
         embedding_dim: int = 384,  # all-MiniLM-L6-v2 dimension
+        api_key: Optional[str] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
     ):
         """
         Initialize Elasticsearch vector backend.
@@ -27,13 +30,24 @@ class ElasticsearchVectorBackend(BaseSearchBackend):
             host: Elasticsearch host
             port: Elasticsearch port
             embedding_dim: Dimension of embeddings
+            api_key: Optional API key for authentication
+            username: Optional username for basic auth
+            password: Optional password for basic auth
         """
         super().__init__(name=f"elasticsearch_vector_{index_name}")
         self.index_name = index_name
         self.host = host
         self.port = port
         self.embedding_dim = embedding_dim
-        self.client = Elasticsearch([f"http://{host}:{port}"])
+
+        if api_key:
+            self.client = Elasticsearch([f"http://{host}:{port}"], api_key=api_key)
+        elif username and password:
+            self.client = Elasticsearch(
+                [f"http://{host}:{port}"], basic_auth=(username, password)
+            )
+        else:
+            self.client = Elasticsearch([f"http://{host}:{port}"])
 
     def create_index(self) -> None:
         """Create Elasticsearch index with dense vector mapping."""

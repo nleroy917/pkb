@@ -16,6 +16,9 @@ class ElasticsearchKeywordBackend(BaseSearchBackend):
         index_name: str = "pkb_keyword",
         host: str = "localhost",
         port: int = 9200,
+        api_key: Optional[str] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
     ):
         """
         Initialize Elasticsearch keyword backend.
@@ -24,12 +27,23 @@ class ElasticsearchKeywordBackend(BaseSearchBackend):
             index_name: Name of the Elasticsearch index
             host: Elasticsearch host
             port: Elasticsearch port
+            api_key: Optional API key for authentication
+            username: Optional username for basic auth
+            password: Optional password for basic auth
         """
         super().__init__(name=f"elasticsearch_keyword_{index_name}")
         self.index_name = index_name
         self.host = host
         self.port = port
-        self.client = Elasticsearch([f"http://{host}:{port}"])
+
+        if api_key:
+            self.client = Elasticsearch([f"http://{host}:{port}"], api_key=api_key)
+        elif username and password:
+            self.client = Elasticsearch(
+                [f"http://{host}:{port}"], basic_auth=(username, password)
+            )
+        else:
+            self.client = Elasticsearch([f"http://{host}:{port}"])
 
     def create_index(self) -> None:
         """

@@ -22,6 +22,9 @@ DEFAULT_CONFIG = {
             "enabled": False,
             "host": "localhost",
             "port": 9200,
+            "api_key": None,  # Optional API key for authentication
+            "username": None,  # Optional username for basic auth
+            "password": None,  # Optional password for basic auth
             "indexes": {
                 "keyword": "pkb_keyword",
                 "vector": "pkb_vector",
