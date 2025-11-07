@@ -177,7 +177,9 @@ class PKBServer:
             backend: str = Query(
                 "all", description="Backend type (keyword, vector, all)"
             ),
-            top_k: int = Query(10, description="Number of results to return", ge=1, le=100),
+            top_k: int = Query(
+                10, description="Number of results to return", ge=1, le=100
+            ),
         ):
             """
             Search endpoint.
@@ -197,7 +199,9 @@ class PKBServer:
 
             try:
                 results = self.search_engine.search(
-                    query=query, backend_type=backend if backend != "all" else None, top_k=top_k
+                    query=query,
+                    backend_type=backend if backend != "all" else None,
+                    top_k=top_k,
                 )
 
                 # convert to response format
